@@ -212,7 +212,8 @@ export const GLOBAL_MENU_ITEMS: GlobalMenuItems = [
       label: 'Resources',
       menuItems: [
         [
-          /*           {
+          /*
+                     {
             label: 'Troubleshooting',
             icon: 'contributing',
             href: '/guides/troubleshooting',
@@ -260,6 +261,7 @@ export const gettingstarted: NavMenuConstant = {
         { name: 'React', url: '/guides/getting-started/quickstarts/reactjs' },
         { name: 'NuxtJS', url: '/guides/getting-started/quickstarts/nuxtjs' },
         { name: 'Vue', url: '/guides/getting-started/quickstarts/vue' },
+        { name: 'Hono', url: '/guides/getting-started/quickstarts/hono' },
         { name: 'Flutter', url: '/guides/getting-started/quickstarts/flutter' },
         { name: 'iOS SwiftUI', url: '/guides/getting-started/quickstarts/ios-swiftui' },
         {
@@ -1357,6 +1359,10 @@ export const functions: NavMenuConstant = {
         {
           name: 'Running AI Models',
           url: '/guides/functions/ai-models',
+        },
+        {
+          name: 'Wasm modules',
+          url: '/guides/functions/wasm',
         },
         {
           name: 'Deploying with CI / CD pipelines',
