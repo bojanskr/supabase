@@ -22,8 +22,10 @@ import {
   isView as isTableLikeView,
 } from 'data/table-editor/table-editor-types'
 import { useTableUpdateMutation } from 'data/tables/table-update-mutation'
+import { useSendEventMutation } from 'data/telemetry/send-event-mutation'
 import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
 import { useIsFeatureEnabled } from 'hooks/misc/useIsFeatureEnabled'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
 import { PROTECTED_SCHEMAS } from 'lib/constants/schemas'
 import {
   Button,
@@ -48,11 +50,10 @@ export interface GridHeaderActionsProps {
 const GridHeaderActions = ({ table }: GridHeaderActionsProps) => {
   const { ref } = useParams()
   const { project } = useProjectContext()
+  const org = useSelectedOrganization()
 
   // need project lints to get security status for views
-  const { data: lints = [] } = useProjectLintsQuery({
-    projectRef: project?.ref,
-  })
+  const { data: lints = [] } = useProjectLintsQuery({ projectRef: project?.ref })
 
   const isTable = isTableLike(table)
   const isForeignTable = isTableLikeForeignTable(table)
@@ -71,7 +72,6 @@ const GridHeaderActions = ({ table }: GridHeaderActionsProps) => {
     },
   })
 
-  const [open, setOpen] = useState(false)
   const [showEnableRealtime, setShowEnableRealtime] = useState(false)
   const [rlsConfirmModalOpen, setRlsConfirmModalOpen] = useState(false)
   const [isAutofixViewSecurityModalOpen, setIsAutofixViewSecurityModalOpen] = useState(false)
@@ -131,6 +131,8 @@ const GridHeaderActions = ({ table }: GridHeaderActionsProps) => {
       table.schema
     )
 
+  const { mutate: sendEvent } = useSendEventMutation()
+
   const toggleRealtime = async () => {
     if (!project) return console.error('Project is required')
     if (!realtimePublication) return console.error('Unable to find realtime publication')
@@ -143,6 +145,18 @@ const GridHeaderActions = ({ table }: GridHeaderActionsProps) => {
       : realtimeEnabledTables
           .filter((x: any) => x.id != table.id)
           .map((x: any) => `${x.schema}.${x.name}`)
+
+    sendEvent({
+      action: 'realtime_toggle_table_clicked',
+      properties: {
+        newState: exists ? 'disabled' : 'enabled',
+        origin: 'tableGridHeader',
+      },
+      groups: {
+        project: project?.ref ?? 'Unknown',
+        organization: org?.slug ?? 'Unknown',
+      },
+    })
 
     updatePublications({
       projectRef: project?.ref,
@@ -243,7 +257,7 @@ const GridHeaderActions = ({ table }: GridHeaderActionsProps) => {
                 )}
               </>
             ) : (
-              <Popover_Shadcn_ open={open} onOpenChange={() => setOpen(!open)} modal={false}>
+              <Popover_Shadcn_ modal={false}>
                 <PopoverTrigger_Shadcn_ asChild>
                   <Button type="warning" icon={<Lock strokeWidth={1.5} />}>
                     RLS disabled
@@ -278,7 +292,7 @@ const GridHeaderActions = ({ table }: GridHeaderActionsProps) => {
             )
           ) : null}
           {isView && viewHasLints && (
-            <Popover_Shadcn_ open={open} onOpenChange={() => setOpen(!open)} modal={false}>
+            <Popover_Shadcn_ modal={false}>
               <PopoverTrigger_Shadcn_ asChild>
                 <Button type="warning" icon={<Unlock strokeWidth={1.5} />}>
                   Security Definer view
@@ -323,7 +337,7 @@ const GridHeaderActions = ({ table }: GridHeaderActionsProps) => {
             </Popover_Shadcn_>
           )}
           {isMaterializedView && materializedViewHasLints && (
-            <Popover_Shadcn_ open={open} onOpenChange={() => setOpen(!open)} modal={false}>
+            <Popover_Shadcn_ modal={false}>
               <PopoverTrigger_Shadcn_ asChild>
                 <Button type="warning" icon={<Unlock strokeWidth={1.5} />}>
                   Security Definer view
@@ -360,7 +374,7 @@ const GridHeaderActions = ({ table }: GridHeaderActionsProps) => {
             </Popover_Shadcn_>
           )}
           {isForeignTable && table.schema === 'public' && (
-            <Popover_Shadcn_ open={open} onOpenChange={() => setOpen(!open)} modal={false}>
+            <Popover_Shadcn_ modal={false}>
               <PopoverTrigger_Shadcn_ asChild>
                 <Button type="warning" icon={<Unlock strokeWidth={1.5} />}>
                   Foreign table is accessible via your project's APIs
